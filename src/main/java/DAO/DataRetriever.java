@@ -1,5 +1,6 @@
 package DAO;
 
+import classe.InvoiceStatus;
 import classe.InvoiceTotal;
 import config.DatabaseConnection;
 
@@ -39,6 +40,34 @@ public class DataRetriever {
         } catch (SQLException e) {
            throw new RuntimeException(e);
         }
+        return results;
+    }
+
+    public List<InvoiceTotal> findConfirmedAndPaidInvoiceTotals() {
+        List<InvoiceTotal> results = new ArrayList<>();
+        String sql = "SELECT invoice_id, customer_name, status, SUM(quantity * unit_price) as total\n" +
+                "FROM invoice i\n" +
+                "         JOIN invoice_line l ON i.id = l.invoice_id\n" +
+                "WHERE i.status IN ('CONFIRMED', 'PAID')\n" +
+                "GROUP BY invoice_id, i.customer_name, i.status";
+
+        try (Connection conn = dbConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery(sql)) {
+
+            while (rs.next()) {
+                InvoiceTotal invoiceTotal = new InvoiceTotal();
+                invoiceTotal.setId(rs.getInt("id"));
+                invoiceTotal.setCustomerName(rs.getString("customer_name"));
+                invoiceTotal.setStatus(InvoiceStatus.valueOf(rs.getString("status")));
+                invoiceTotal.setTotal(rs.getDouble("total"));
+                results.add(invoiceTotal);
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+
         return results;
     }
 }
