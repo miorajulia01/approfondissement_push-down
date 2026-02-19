@@ -71,4 +71,15 @@ public class InvoiceTotal {
     public int hashCode() {
         return Objects.hash(id, customerName, status, total, unitPrice);
     }
+
+    @Override
+    public String toString() {
+        return "InvoiceTotal{" +
+                "id=" + id +
+                ", customerName='" + customerName + '\'' +
+                ", status=" + status +
+                ", total=" + total +
+                ", unitPrice=" + unitPrice +
+                '}';
+    }
 }
