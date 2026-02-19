@@ -65,7 +65,6 @@ public class DataRetriever {
                 invoiceTotal.setTotal(rs.getDouble("total"));
                 results.add(invoiceTotal);
             }
-
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -80,23 +79,40 @@ public class DataRetriever {
                 "FROM invoice i\n" +
                 "JOIN invoice_line l ON i.id = l.invoice_id";
 
-        // try-with-resources corrigé
-        try (Connection conn = dbConnection.getConnection();  // ← getConnection() pas getConnectionO
+        try (Connection conn = dbConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {  // ← executeQuery() sans paramètre
+             ResultSet rs = ps.executeQuery()) {
 
             InvoiceStatusTotal totals = new InvoiceStatusTotal();
-
             if (rs.next()) {
-                totals.setTotalPaid(rs.getDouble("total_paid"));        // ← sans "columnLabel:"
+                totals.setTotalPaid(rs.getDouble("total_paid"));
                 totals.setTotalConfirmed(rs.getDouble("total_confirmed"));
                 totals.setTotalDraft(rs.getDouble("total_draft"));
             }
-
             return totals;
-
         } catch (SQLException e) {
-            throw new RuntimeException("Erreur lors du calcul des totaux par statut", e);
+            throw new RuntimeException(e);
         }
+    }
+
+    public Double computeWeightedTurnover()  {
+        Double result = 0.0;
+        String sql = "SELECT SUM(quantity * unit_price * CASE status\n" +
+                "    WHEN 'PAID' THEN 1\n" +
+                "    WHEN 'CONFIRMED' THEN 0.5\n" +
+                "    ELSE 0\n" +
+                "    END) as weighted_total\n" +
+                "FROM invoice i\n" +
+                "         JOIN invoice_line l ON i.id = l.invoice_id";
+
+        try (Connection conn = dbConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next())
+                result = rs.getDouble("weighted_total");;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        return result;
     }
 }

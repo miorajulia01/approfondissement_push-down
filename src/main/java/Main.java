@@ -7,5 +7,6 @@ public class Main {
         System.out.println(dr.findInvoiceTotals());
         System.out.println(dr.findConfirmedAndPaidInvoiceTotals());
         System.out.println(dr.computeStatusTotals());
+        System.out.println(dr.computeWeightedTurnover());
     }
 }
