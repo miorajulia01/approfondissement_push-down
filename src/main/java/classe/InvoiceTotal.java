@@ -10,6 +10,8 @@ public class InvoiceTotal {
     private double total;
     private BigDecimal unitPrice;
 
+    public InvoiceTotal() {}
+
     public InvoiceTotal(int id, String customerName, InvoiceStatus status, double total, BigDecimal unitPrice) {
         this.id = id;
         this.customerName = customerName;
