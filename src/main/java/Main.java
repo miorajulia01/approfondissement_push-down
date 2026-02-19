@@ -8,5 +8,6 @@ public class Main {
         System.out.println(dr.findConfirmedAndPaidInvoiceTotals());
         System.out.println(dr.computeStatusTotals());
         System.out.println(dr.computeWeightedTurnover());
+        dr.findInvoiceTaxSummaries().stream().forEach(System.out::println);
     }
 }

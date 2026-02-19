@@ -2,6 +2,7 @@ package DAO;
 
 import classe.InvoiceStatus;
 import classe.InvoiceStatusTotal;
+import classe.InvoiceTaxSummary;
 import classe.InvoiceTotal;
 import config.DatabaseConnection;
 
@@ -96,7 +97,7 @@ public class DataRetriever {
     }
 
     public Double computeWeightedTurnover()  {
-        Double result = 0.0;
+        Double results = 0.0;
         String sql = "SELECT SUM(quantity * unit_price * CASE status\n" +
                 "    WHEN 'PAID' THEN 1\n" +
                 "    WHEN 'CONFIRMED' THEN 0.5\n" +
@@ -109,10 +110,40 @@ public class DataRetriever {
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
             if (rs.next())
-                result = rs.getDouble("weighted_total");;
+                results = rs.getDouble("weighted_total");;
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
-        return result;
+        return results;
+    }
+
+    public List<InvoiceTaxSummary> findInvoiceTaxSummaries() {
+        List<InvoiceTaxSummary> results = new ArrayList<>();
+        String sql = "SELECT i.id,\n" +
+                "       SUM(quantity * unit_price) as total_ht,\n" +
+                "       SUM(quantity * unit_price * t.rate / 100) as total_tva,\n" +
+                "       SUM(quantity * unit_price * (1 + t.rate / 100)) as total_ttc\n" +
+                "FROM invoice i\n" +
+                "         JOIN invoice_line l ON i.id = l.invoice_id\n" +
+                "         CROSS JOIN tax_config t WHERE t.label = 'TVA STANDARD'\n" +
+                "GROUP BY i.id ORDER BY i.id";
+
+        try (Connection conn = dbConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                InvoiceTaxSummary summary = new InvoiceTaxSummary();
+                summary.setId(rs.getInt("id"));
+                summary.setTotalHt(rs.getDouble("total_ht"));
+                summary.setTotalTva(rs.getDouble("total_tva"));
+                summary.setTotalTtc(rs.getDouble("total_ttc"));
+                results.add(summary);
+            }
+
+        } catch (SQLException e) {
+          throw new RuntimeException(e);
+        }
+        return results;
     }
 }
