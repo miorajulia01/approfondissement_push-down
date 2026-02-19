@@ -6,6 +6,7 @@ import classe.InvoiceTaxSummary;
 import classe.InvoiceTotal;
 import config.DatabaseConnection;
 
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -145,5 +146,28 @@ public class DataRetriever {
           throw new RuntimeException(e);
         }
         return results;
+    }
+
+    public BigDecimal computeWeightedTurnoverTtc() {
+        BigDecimal result = BigDecimal.ZERO;
+        String sql = "SELECT SUM((quantity * unit_price * (1 + rate / 100)) * CASE  status\n" +
+                "        WHEN 'PAID' THEN 1\n" +
+                "        WHEN 'CONFIRMED' THEN 0.5\n" +
+                "        ELSE 0\n" +
+                "     END) as weighted_turnover_ttc\n" +
+                "FROM invoice i\n" +
+                "        JOIN invoice_line l ON i.id = l.invoice_id\n" +
+                "        CROSS JOIN tax_config t WHERE t.label = 'TVA STANDARD'";
+
+        try (Connection conn = dbConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                result = rs.getBigDecimal("weighted_turnover_ttc");
+            }
+        } catch (SQLException e) {
+           throw new RuntimeException(e);
+        }
+        return result;
     }
 }

@@ -9,5 +9,6 @@ public class Main {
         System.out.println(dr.computeStatusTotals());
         System.out.println(dr.computeWeightedTurnover());
         dr.findInvoiceTaxSummaries().stream().forEach(System.out::println);
+        System.out.println(dr.computeWeightedTurnoverTtc());
     }
 }
